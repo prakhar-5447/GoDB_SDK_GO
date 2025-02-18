@@ -32,9 +32,23 @@ func (c *GoDBClient) Close() error {
 	return c.conn.Close()
 }
 
+// CreateUser calls the gRPC CreateUser method to register a new user and returns
+// both a message and a connection string with a placeholder for the database name.
+func (c *GoDBClient) CreateUser(ctx context.Context, username, password string) (string, string, error) {
+	req := &proto.CreateUserRequest{
+		Username: username,
+		Password: password,
+	}
+	resp, err := c.client.CreateUser(ctx, req)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create user: %w", err)
+	}
+	return resp.Message, resp.ConnectionString, nil
+}
+
 // CreateDatabase creates a new database for a user.
-func (c *GoDBClient) CreateDatabase(ctx context.Context) (string, error) {
-	req := &proto.CreateDatabaseRequest{}
+func (c *GoDBClient) CreateDatabase(ctx context.Context, connectionString string) (string, error) {
+	req := &proto.CreateDatabaseRequest{ConnectionString: connectionString}
 	resp, err := c.client.CreateDatabase(ctx, req)
 	if err != nil {
 		return "", err
